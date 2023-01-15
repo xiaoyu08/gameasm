@@ -23,9 +23,12 @@ jobs:
         
     - name: Setup environment
       run: env GOOS=windows GOARCH=amd64
+    
+    - name: Setup dependencies
+      run: go get -d ./...
 
     - name: Build
-      run: go build -v ./...
+      run: go build -o gameasm.exe
 
     - name: Test
       run: go test -v ./...
