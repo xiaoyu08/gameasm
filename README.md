@@ -1,5 +1,7 @@
 <h1 align="center">GameASM - Game Assets Manager</h1>
 
+<p align="center">[![Go](https://github.com/xiaoyu08/gameasm/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/xiaoyu08/gameasm/actions/workflows/go.yml)</p>
+
 GameASM aka game assets manager, is a simple implementation for Golang to create and recover incremental update for games.
 
 ## Purpose
