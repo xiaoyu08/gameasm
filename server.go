@@ -95,11 +95,11 @@ func PackageFiles(version_string string, args []string) error {
 	is_specfic_version_generation := false
 	if len(args) == 5 {
 		// 指定了要生成增量的上一个版本
-		previous_version_string = "_" + args[4] + "_index.json"
+		previous_version_string = "indexes/_" + args[4] + "_index.json"
 		LoggerInfo("指定了要从版本 " + previous_version_string + " 生成增量")
 		is_specfic_version_generation = true
 	}
-	data, err = os.ReadFile(filepath.Join(indexes_dictionary, previous_version_string))
+	data, err = os.ReadFile(filepath.Join(artifact_dictionary, previous_version_string))
 	latest := map[string]string{}
 	if err == nil {
 		LoggerInfo("检测到有旧版本，将进行增量更新...")
@@ -189,7 +189,7 @@ func PackageFiles(version_string string, args []string) error {
 	HandleError(err, "写入 index.json")
 
 	if !is_specfic_version_generation {
-		err = os.WriteFile(filepath.Join(indexes_dictionary, "_latest_index.json"), index_json, 0644)
+		err = os.WriteFile(filepath.Join(artifact_dictionary, "_latest_index.json"), index_json, 0644)
 		HandleError(err, "写入 _latest_index.json")
 	} else {
 		LoggerInfo("由于本次是从特定版本生成增量，本版本不会作为下一次生成安装包的依据")
