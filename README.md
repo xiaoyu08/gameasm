@@ -1,8 +1,14 @@
 <h1 align="center">GameASM - Game Assets Manager</h1>
 
+GameASM aka game assets manager, is a simple implementation for Golang to create and recover incremental update for games.
+
+## Download
+
+下载 GameASM 的最新 Github 版本，请点击：
+
 [![Go](https://github.com/xiaoyu08/gameasm/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/xiaoyu08/gameasm/actions/workflows/go.yml)
 
-GameASM aka game assets manager, is a simple implementation for Golang to create and recover incremental update for games.
+在打开的页面中选择最新的成功构建，页面向下拉找到 Artifacts，然后点击文件 `artifact` 下载压缩包即可。
 
 ## Purpose
 
