@@ -50,13 +50,13 @@ func Push(args []string) {
 	fmt.Println()
 	var version_string string = ""
 	reg := regexp.MustCompile(`[^a-zA-Z0-9.]+`)
-	if len(args) != 4 {
+	if len(args) < 4 {
 		fmt.Println("一些必要的参数尚未被满足, 请回答下列问题:")
 		version_string = ConversationQuestionRegexp("游戏版本字符串", reg, "字母数字和点")
 	} else {
 		version_string = reg.ReplaceAllString(args[3], "")
 	}
-	PackageFiles(version_string)
+	PackageFiles(version_string, args)
 	fmt.Println()
 }
 
@@ -74,7 +74,7 @@ func getmd5(path string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func PackageFiles(version_string string) error {
+func PackageFiles(version_string string, args []string) error {
 	data, err := os.ReadFile("./config.dat")
 	HandleError(err, "读取配置文件")
 
@@ -82,21 +82,31 @@ func PackageFiles(version_string string) error {
 	version_formatted_string := strings.ReplaceAll(version_string, ".", "_")
 	cache_dictionary := filepath.Join(filepath.Dir(os.Args[0]), "gameasm/cache/"+version_formatted_string+"/")
 	artifact_dictionary := filepath.Join(filepath.Dir(os.Args[0]), "gameasm/artifacts/")
+	indexes_dictionary := filepath.Join(filepath.Dir(os.Args[0]), "gameasm/artifacts/indexes/")
 	MkdirAllHandleError(artifact_dictionary)
 	MkdirAllHandleError(cache_dictionary)
+	MkdirAllHandleError(indexes_dictionary)
 
 	fmt.Println("打包根目录:", str_config)
 	fmt.Println("打包缓存文件目录:", cache_dictionary)
 	fmt.Println()
 
-	data, err = os.ReadFile(filepath.Join(artifact_dictionary, "_latest_index.json"))
+	previous_version_string := "_latest_index.json"
+	is_specfic_version_generation := false
+	if len(args) == 5 {
+		// 指定了要生成增量的上一个版本
+		previous_version_string = "_" + args[4] + "_index.json"
+		LoggerInfo("指定了要从版本 " + previous_version_string + " 生成增量")
+		is_specfic_version_generation = true
+	}
+	data, err = os.ReadFile(filepath.Join(indexes_dictionary, previous_version_string))
 	latest := map[string]string{}
 	if err == nil {
 		LoggerInfo("检测到有旧版本，将进行增量更新...")
 		var index_config string = strings.TrimSpace(string(data))
 
 		err = json.Unmarshal([]byte(index_config), &latest)
-		HandleError(err, "Unmarshal _latest_index.json")
+		HandleError(err, "Unmarshal previous index json")
 	} else {
 		LoggerInfo("这是第一次发布版本，安装包可能较大...")
 	}
@@ -177,14 +187,23 @@ func PackageFiles(version_string string) error {
 	index_json, err := json.Marshal(index)
 	err = os.WriteFile(filepath.Join(cache_dictionary, "index.json"), index_json, 0644)
 	HandleError(err, "写入 index.json")
-	err = os.WriteFile(filepath.Join(artifact_dictionary, "_latest_index.json"), index_json, 0644)
-	HandleError(err, "写入 _latest_index.json")
+
+	if !is_specfic_version_generation {
+		err = os.WriteFile(filepath.Join(indexes_dictionary, "_latest_index.json"), index_json, 0644)
+		HandleError(err, "写入 _latest_index.json")
+	} else {
+		LoggerInfo("由于本次是从特定版本生成增量，本版本不会作为下一次生成安装包的依据")
+	}
+
+	err = os.WriteFile(filepath.Join(indexes_dictionary, "_"+version_string+"_index.json"), index_json, 0644)
+	HandleError(err, "_"+version_string+"_index.json")
 
 	LoggerInfo("打包为 zip 文件...")
 	zipDirectory(filepath.Join(artifact_dictionary, version_formatted_string+".zip"), cache_dictionary)
 	err = os.RemoveAll(cache_dictionary)
 
 	LoggerInfo("请不要删除 _latest_index.json 文件，这是为了下一次增量更新准备的。")
+	LoggerInfo("已成功生成增量安装包在 " + filepath.Join(artifact_dictionary, version_formatted_string+".zip"))
 
 	exec.Command(`explorer.exe`, `/select,`, filepath.Join(artifact_dictionary, version_formatted_string+".zip")).Run()
 
